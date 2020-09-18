@@ -39,8 +39,6 @@ class FormViewNormalizer implements ContextAwareNormalizerInterface {
             'unique_block_prefix'
         ];
 
-        //var_dump(array_keys((array)$view->vars));
-
         $vars = $view->vars;
 
         $result = [
@@ -71,7 +69,7 @@ class FormViewNormalizer implements ContextAwareNormalizerInterface {
     }
 
     public function normalize($object, string $format = null, array $context = array()) {
-        return array_keys((array) $object->children['test']->vars);
+        //return array_keys((array) $object->children['test']->vars);
         return $this->serializeForm($object);
     }
 
