@@ -4,23 +4,27 @@ namespace RT\SymfonyFormAddons\Serializer\Normalizer;
 
 use Symfony\Component\Serializer\Normalizer\ContextAwareNormalizerInterface;
 use Symfony\Component\Form\FormView;
-use Symfony\Component\Form\ChoiceList\View\ChoiceView;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
+use RT\SymfonyFormAddons\Serializer\Normalizer\ChoiceViewNormalizer;
 
 /**
  * @author Vladimir Butov
  */
-class FormViewNormalizer implements ContextAwareNormalizerInterface {
+class FormViewNormalizer implements ContextAwareNormalizerInterface, NormalizerAwareInterface {
 
-    protected function serializeChoice(ChoiceView $choice) {
+    use NormalizerAwareTrait;
 
-        return [
-            'label' => $choice->label,
-            'value' => $choice->value,
-            'attr' => $choice->attr,
-        ];
+    /**
+     * @var ChoiceViewNormalizer 
+     */
+    protected $choiceViewNormalizer;
+
+    public function __construct(ChoiceViewNormalizer $choiceViewNormalizer) {
+        $this->choiceViewNormalizer = $choiceViewNormalizer;
     }
 
-    protected function serializeForm(FormView $view) {
+    public function normalize($object, string $format = null, array $context = []) {
         static $varKeys = [
             'attr',
             'action',
@@ -39,11 +43,15 @@ class FormViewNormalizer implements ContextAwareNormalizerInterface {
             'unique_block_prefix'
         ];
 
-        $vars = $view->vars;
+        $vars = $object->vars;
 
         $result = [
             'name' => $vars['full_name'],
         ];
+
+        if (isset($vars['errors'])) {
+            $result['errors'] = $this->normalizer->normalize($vars['errors']);
+        }
 
         foreach ($varKeys as $key) {
 
@@ -53,27 +61,17 @@ class FormViewNormalizer implements ContextAwareNormalizerInterface {
         }
 
         if (isset($vars['choices'])) {
-            $result['choices'] = array_map(fn($choice) => $this->serializeChoice($choice), $vars['choices']);
+            $result['choices'] = \array_map(fn($choice) => $this->normalizer->normalize($choice, $format, $context), $vars['choices']);
         }
 
-        if (count($view->children) === 0) {
-            return $result;
-        }
-
-        $result['children'] = [];
-        foreach ($view->children as $name => $child) {
-            $result['children'][$name] = $this->serializeForm($child);
+        foreach ($object->children as $name => $child) {
+            $result['children'][$name] = $this->normalizer->normalize($child, $format, $context);
         }
 
         return $result;
     }
 
-    public function normalize($object, string $format = null, array $context = array()) {
-        //return array_keys((array) $object->children['test']->vars);
-        return $this->serializeForm($object);
-    }
-
-    public function supportsNormalization($data, $format = null, array $context = array()) {
+    public function supportsNormalization($data, string $format = null, array $context = []) {
 
         return $data instanceof FormView;
     }
