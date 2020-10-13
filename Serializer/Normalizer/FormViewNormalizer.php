@@ -15,16 +15,8 @@ class FormViewNormalizer implements ContextAwareNormalizerInterface, NormalizerA
 
     use NormalizerAwareTrait;
 
-    /**
-     * @var ChoiceViewNormalizer 
-     */
-    protected $choiceViewNormalizer;
-
-    public function __construct(ChoiceViewNormalizer $choiceViewNormalizer) {
-        $this->choiceViewNormalizer = $choiceViewNormalizer;
-    }
-
     public function normalize($object, string $format = null, array $context = []) {
+
         static $varKeys = [
             'attr',
             'action',
@@ -40,7 +32,8 @@ class FormViewNormalizer implements ContextAwareNormalizerInterface, NormalizerA
             'method',
             'required',
             'row_attr',
-            'unique_block_prefix'
+            'unique_block_prefix',
+            'value',
         ];
 
         $vars = $object->vars;
